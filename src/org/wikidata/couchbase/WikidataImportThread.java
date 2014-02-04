@@ -17,19 +17,20 @@
  * Contributors:
  *     Daniel Murygin <daniel.murygin[at]gmail[dot]com>
  ******************************************************************************/
-package de.murygin.couchbase;
+package org.wikidata.couchbase;
 
 import org.apache.log4j.Logger;
 
 import com.couchbase.client.CouchbaseClient;
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 
 /**
  * This thread loads information about one artist from Last.fm
  * ans saves JSON response in a Couchbase bucket.
  * 
- * {@link LastfmExporter} uses multiple ArtistExportThreads
+ * {@link WikidataCouchbaseImporter} uses multiple ArtistExportThreads
  * to export data from Last.fm
  * 
  * Last.fm API - http://www.lastfm.de/api
@@ -37,20 +38,20 @@ import com.sun.jersey.api.client.WebResource;
  *
  * @author Daniel Murygin <dm[at]sernet[dot]de>
  */
-public class ArtistExportThread extends Thread {
+public class WikidataImportThread extends Thread {
     
-    private static final Logger LOG = Logger.getLogger(ArtistExportThread.class);
+    private static final Logger LOG = Logger.getLogger(WikidataImportThread.class);
     
     Client jerseyClient = null;
     CouchbaseClient couchbaseClient = null;
-    String artistName = null;
+    Integer startId;
     
     
-    public ArtistExportThread(Client jerseyClient, CouchbaseClient cb, String username) {
+    public WikidataImportThread(Client jerseyClient, CouchbaseClient cb, Integer startId) {
         super();
         this.jerseyClient = jerseyClient;
         this.couchbaseClient = cb;
-        this.artistName = username;
+        this.startId = startId;
     }
     
     /* (non-Javadoc)
@@ -58,25 +59,41 @@ public class ArtistExportThread extends Thread {
      */
     @Override
     public void run() {
-        exportArtists(artistName);
+        exportItem(startId);
     }
     
-    private void exportArtists(String artistName) {                
+    private void exportItem(Integer startId) {                
         if (LOG.isDebugEnabled()) {
-            LOG.debug("Loading info of artist: " + artistName + " from lastfm...");
+            LOG.debug("Loading item with id: " + startId + " from wikidata...");
         }
-        String jsonResponse = getArtistInfoAsJson(artistName);         
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("lastfm JSON response: " + jsonResponse);
-        } 
-        saveJsonInCouchbase(artistName, jsonResponse);   
-        if (LOG.isInfoEnabled()) {
-            LOG.info("Info of " + artistName + " saved in couchbase.");
+        try {
+            String jsonResponse = getItemAsJson(startId);         
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("lastfm JSON response: " + jsonResponse);
+            } 
+            saveJsonInCouchbase(startId, jsonResponse);   
+            if (LOG.isInfoEnabled()) {
+                LOG.info("Item " + startId + " saved in couchbase.");
+            }
+        } catch (UniformInterfaceException uie) {
+            int status = -1;
+            if(uie!=null && uie.getResponse()!=null) {
+                status = uie.getResponse().getStatus();
+            }
+            LOG.warn("Item " + startId + " was not exported. HTTP error: " + status);
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Stacktrace: ", uie);
+            }
+        } catch (com.sun.jersey.api.client.ClientHandlerException che) {     
+            LOG.warn("Item " + startId + " was not exported. Unknow error, maybe a network problem");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Stacktrace: ", che);
+            }
         }
     }
     
-    private String getArtistInfoAsJson(String artistName) {
-        String url = buildWebserviceUrl(artistName);
+    private String getItemAsJson(Integer id) {
+        String url = buildWebserviceUrl(id);
         
         if (LOG.isDebugEnabled()) {
             LOG.debug("Webservice URL: " + url);
@@ -87,30 +104,27 @@ public class ArtistExportThread extends Thread {
         return jsonResponse;
     }
 
-    private void saveJsonInCouchbase(String artistName, String jsonResponse) {
+    private void saveJsonInCouchbase(Integer id, String jsonResponse) {
         try {
-            String key = buildDocumentKey(artistName);            
+            String key = buildDocumentKey(id);            
             couchbaseClient.set(key, 0, jsonResponse);
         } catch (Exception e) {
             System.err.println("Error connecting to Couchbase: " + e.getMessage());
         }
     }
     
-    private String buildWebserviceUrl(String artistName) {
-        artistName = artistName.replaceAll(" ", "%20");
+    private String buildWebserviceUrl(Integer id) {
         StringBuilder sb = new StringBuilder();
-        sb.append("http://ws.audioscrobbler.com/2.0/?method=artist.getinfo&artist=");
-        sb.append(artistName);
-        sb.append("&api_key=");
-        sb.append(LastfmExporter.key);
-        sb.append("&format=json");     
+        sb.append("https://www.wikidata.org/wiki/Special:EntityData/Q");
+        sb.append(id);
+        sb.append(".json");    
         return sb.toString();
     }
     
-    private String buildDocumentKey(String artistName) {
+    private String buildDocumentKey(Integer startId) {
         StringBuilder sb = new StringBuilder();
-        sb.append("lastfm:artist:");
-        sb.append(artistName);
+        sb.append("wikidata:item:");
+        sb.append(startId);
         return sb.toString();
     }
 }

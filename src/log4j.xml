@@ -14,7 +14,7 @@
 
 	<appender name="FILE" class="org.apache.log4j.RollingFileAppender">
 		<!-- <param name="Threshold" value="INFO" /> -->
-		<param name="File" value="./lastfm-loader.log" />
+		<param name="File" value="./wikidata-importer.log" />
 		<param name="Append" value="true" />
 		<param name="MaxFileSize" value="5000KB" />
 		<param name="MaxBackupIndex" value="10" />
