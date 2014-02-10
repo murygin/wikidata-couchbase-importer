@@ -54,13 +54,20 @@ public class WikidataCouchbaseImporter {
 
     private static final Logger LOG = Logger.getLogger(WikidataCouchbaseImporter.class);
 
-    private static final String USAGE = "[-f <first_id>] [-l <last_id>]";
+    private static final String USAGE = "[-u <couchbase_url>] [-b <bucket>] [-f <first_id>] [-l <last_id>]";
     private static final String HEADER = "Wikidata couchbase importer, Copyright (c) 2014 Daniel Murygin.";
     private static final String FOOTER = "For more instructions, see: http://murygin.wordpress.com";
     
-    private Integer startId;
-    private Integer endId;
-    private static int maxNumberOfThreads = 5;
+    private static final Integer FIRST_ID_DEFAULT = 1;
+    private static final Integer MAX_NUMBER_Of_THREADS_DEFAULT = 5;
+    private static final String[] COUCHBASE_URLS_DEFAULT = {"http://127.0.0.1:8091/pools"};
+    private static final String BUCKET_DEFAULT = "wikidata";
+    
+    private Integer firstId = FIRST_ID_DEFAULT;
+    private Integer lastId;
+    private static int maxNumberOfThreads = MAX_NUMBER_Of_THREADS_DEFAULT;
+    private String[] couchbaseUrls = COUCHBASE_URLS_DEFAULT;
+    private String bucket = BUCKET_DEFAULT;
     
     private static long timeoutInMinutes = 15;
 
@@ -69,46 +76,71 @@ public class WikidataCouchbaseImporter {
     private static CouchbaseClient cb = null;
 
     public WikidataCouchbaseImporter() {
-        super();
+        super();    
+        init();
+    }
 
+
+    /**
+     * @param couchbaseUrlsParam
+     * @param firstIdParam
+     * @param lastIdParam
+     */
+    public WikidataCouchbaseImporter(String[] couchbaseUrlsParam, String bucketParam, Integer firstIdParam, Integer lastIdParam) {
+       
+       couchbaseUrls = couchbaseUrlsParam;
+       if(couchbaseUrls==null || couchbaseUrls.length<1) {
+           couchbaseUrls = COUCHBASE_URLS_DEFAULT;
+       }
+       bucket = bucketParam;
+       if(bucket==null) {
+           bucket = BUCKET_DEFAULT;
+       }
+       this.firstId = firstIdParam;
+       if(firstId==null) {
+           firstId = FIRST_ID_DEFAULT;
+       }
+       this.lastId = lastIdParam;
+       if(lastId==null) {
+           lastId = firstId;
+       }
+       init();
+    }
+    
+    private void init() {
         // init Jersey client
         jerseyClient = Client.create();
 
         // init CouchbaseClient
         List<URI> uris = new LinkedList<URI>();
-        uris.add(URI.create("http://127.0.0.1:8091/pools"));
+        for (String url : couchbaseUrls) {
+            uris.add(URI.create(url));
+        }
+       
         try {
-            cb = new CouchbaseClient(uris, "wikidata", "");
+            cb = new CouchbaseClient(uris, bucket, "");
         } catch (Exception e) {
-            System.err.println("Error connecting to Couchbase: " + e.getMessage());
+            LOG.error("Error while connecting to couchbase", e);
         }
 
         // init thread executer
         taskExecutor = Executors.newFixedThreadPool(maxNumberOfThreads);
     }
 
-    /**
-     * @param defaultStartId
-     * @param defaultEndId
-     */
-    public WikidataCouchbaseImporter(Integer startId, Integer endId) {
-       this();
-       this.startId = startId;
-       this.endId = endId;   
-    }
-
     public static void main(String[] args) {
         long startTimestamp = initRuntime();
         CommandLineParser parser = new GnuParser();
         Options options = CommandLineOptions.get();
-        Integer firstId = 0;
-        Integer lastId = 0;
+        Integer firstId = null;
+        Integer lastId = null;
         try {           
             CommandLine cmd = parser.parse( options, args);
-            firstId = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.FIRST_ID, "0"));
-            lastId = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.LAST_ID, String.valueOf(firstId + 10)));
-            maxNumberOfThreads = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.NUMBER_OF_THREADS, String.valueOf(5)));
-            WikidataCouchbaseImporter importer = new WikidataCouchbaseImporter(firstId,lastId);
+            firstId = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.FIRST_ID, String.valueOf(FIRST_ID_DEFAULT)));
+            lastId = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.LAST_ID, String.valueOf(firstId)));
+            maxNumberOfThreads = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.NUMBER_OF_THREADS, String.valueOf(MAX_NUMBER_Of_THREADS_DEFAULT)));
+            String[] urlsFromCmd = cmd.getOptionValues(CommandLineOptions.COUCHBASE_URLS); 
+            String bucket = cmd.getOptionValue(CommandLineOptions.BUCKET, BUCKET_DEFAULT); 
+            WikidataCouchbaseImporter importer = new WikidataCouchbaseImporter(urlsFromCmd,bucket,firstId,lastId);
             importer.run();          
         } catch (ParseException e) {
             LOG.error(e);
@@ -131,8 +163,14 @@ public class WikidataCouchbaseImporter {
         }
     }
     
-    private void run() {     
-        importItem(getStartId());
+    
+    /**
+     * Run the import
+     */
+    public void run() {
+        LOG.info("Starting import...");
+        logCouchbaseParameter();
+        importItem(getFirstId());
     }
 
     /**
@@ -145,35 +183,32 @@ public class WikidataCouchbaseImporter {
      *            The name of an Artist
      */
     private void importItem(int id) {
-
         if (LOG.isInfoEnabled()) {
-            LOG.info("");
-            LOG.info("");
             LOG.info("Importing item " + id);
         }
 
         WikidataImportThread exportThread = new WikidataImportThread(jerseyClient, cb, id);
         taskExecutor.execute(exportThread);
         int next = id + 1;
-        if(next <= getEndId()) {
+        if(next <= getLastId()) {
             importItem(next);
         }
     }
     
-    public Integer getStartId() {
-        return startId;
+    public Integer getFirstId() {
+        return firstId;
     }
 
-    public void setStartId(Integer startId) {
-        this.startId = startId;
+    public void setFirstId(Integer startId) {
+        this.firstId = startId;
     }
 
-    public Integer getEndId() {
-        return endId;
+    public Integer getLastId() {
+        return lastId;
     }
 
-    public void setEndId(Integer endId) {
-        this.endId = endId;
+    public void setLastId(Integer endId) {
+        this.lastId = endId;
     }
 
     public int getMaxNumberOfThreads() {
@@ -181,7 +216,7 @@ public class WikidataCouchbaseImporter {
     }
 
     public void setMaxNumberOfThreads(int maxNumberOfThreads) {
-        this.maxNumberOfThreads = maxNumberOfThreads;
+        WikidataCouchbaseImporter.maxNumberOfThreads = maxNumberOfThreads;
     }
     
     private static void printUsage(Options options) {
@@ -194,9 +229,23 @@ public class WikidataCouchbaseImporter {
         return System.currentTimeMillis();
     }
     
+    private void logCouchbaseParameter() {
+        boolean first = true;
+        StringBuilder sb = new StringBuilder();
+        for (String url : couchbaseUrls) {
+           if(!first) {
+               sb.append(", ");              
+           }
+           first = false;
+           sb.append(url);
+        }
+        LOG.info("Couchbase server urls: " + sb.toString());
+        LOG.info("Couchbase bucket: " + bucket);
+    }
+    
 
     private static void logStatistics(long startTimestamp, int startId, int endId) {
-       int n = endId - startId;
+       int n = endId - startId + 1;
        long runtimeInMs = System.currentTimeMillis()-startTimestamp;
        LOG.info("Import finished. " + n + " items imported.");
        logRuntime("Runtime: ", runtimeInMs);

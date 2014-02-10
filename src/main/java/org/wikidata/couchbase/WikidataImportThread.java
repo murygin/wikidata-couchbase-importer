@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2013 Daniel Murygin.
+ * Copyright (c) 2014 Daniel Murygin.
  *
  * This program is free software: you can redistribute it and/or 
  * modify it under the terms of the GNU Lesser General Public License 
@@ -27,13 +27,13 @@ import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 
 /**
- * This thread loads information about one artist from Last.fm
+ * This thread loads information about an item from wikidata
  * ans saves JSON response in a Couchbase bucket.
  * 
- * {@link WikidataCouchbaseImporter} uses multiple ArtistExportThreads
- * to export data from Last.fm
+ * {@link WikidataCouchbaseImporter} uses multiple WikidataImportThread
+ * to import data from wikidata
  * 
- * Last.fm API - http://www.lastfm.de/api
+ * wikidara API - http://www.wikidata.org/wiki/Wikidata:Data_access
  * Couchbase - http://www.couchbase.com/
  *
  * @author Daniel Murygin <dm[at]sernet[dot]de>
@@ -69,7 +69,7 @@ public class WikidataImportThread extends Thread {
         try {
             String jsonResponse = getItemAsJson(startId);         
             if (LOG.isDebugEnabled()) {
-                LOG.debug("lastfm JSON response: " + jsonResponse);
+                LOG.debug("Wikidata JSON response: " + jsonResponse);
             } 
             saveJsonInCouchbase(startId, jsonResponse);   
             if (LOG.isInfoEnabled()) {
@@ -85,9 +85,14 @@ public class WikidataImportThread extends Thread {
                 LOG.debug("Stacktrace: ", uie);
             }
         } catch (com.sun.jersey.api.client.ClientHandlerException che) {     
-            LOG.warn("Item " + startId + " was not exported. Unknow error, maybe a network problem");
+            LOG.warn("Item " + startId + " was not exported. Unknow error, maybe a network problem: " + che.getMessage());
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Stacktrace: ", che);
+            }
+        } catch (Exception e) {
+            LOG.warn("Item " + startId + " was not exported. Unknow error: " + e.getMessage());
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Stacktrace: ", e);
             }
         }
     }
@@ -105,12 +110,9 @@ public class WikidataImportThread extends Thread {
     }
 
     private void saveJsonInCouchbase(Integer id, String jsonResponse) {
-        try {
-            String key = buildDocumentKey(id);            
-            couchbaseClient.set(key, 0, jsonResponse);
-        } catch (Exception e) {
-            System.err.println("Error connecting to Couchbase: " + e.getMessage());
-        }
+        String key = buildDocumentKey(id);            
+        couchbaseClient.set(key, 0, jsonResponse);
+        
     }
     
     private String buildWebserviceUrl(Integer id) {

@@ -30,21 +30,45 @@ import org.apache.commons.cli.Options;
  */
 public class CommandLineOptions {
     
-    public static final String FIRST_ID = "f";
-    public static final String LAST_ID = "l";
-    public static final String NUMBER_OF_THREADS = "t";
+    public static final String COUCHBASE_URLS = "u";
+    public static final String COUCHBASE_URLS_LONG = "urls";
+    
+    public static final String BUCKET = "b";
+    public static final String BUCKET_LONG = "bucket";
+    
+    public static final String FIRST_ID = "f";   
     public static final String FIRST_ID_LONG = "first";
+    
+    public static final String LAST_ID = "l";
     public static final String LAST_ID_LONG = "last";
+
+    public static final String NUMBER_OF_THREADS = "t";
     public static final String NUMBER_OF_THREADS_LONG = "threads";
     
+    @SuppressWarnings("static-access")
     public static Options get() {
         Options options = new Options();
-        Option firstId = OptionBuilder.hasArg().withArgName(FIRST_ID_LONG).withDescription("First wikidata id (default: 0)").create(FIRST_ID);
+        Option couchbaseUrls = OptionBuilder
+                .hasArg()
+                .hasArgs()
+                .withValueSeparator(',')
+                .withLongOpt(COUCHBASE_URLS_LONG)
+                .withDescription("Couchbase URL(s), separated by ',' (default: http://127.0.0.1:8091/pools)")
+                .create(COUCHBASE_URLS);
+        options.addOption(couchbaseUrls); 
+        
+        Option bucket = OptionBuilder.hasArg().withLongOpt(BUCKET_LONG).withDescription("Bucket name (default: wikidata)").create(BUCKET);
+        options.addOption(bucket);
+        
+        Option firstId = OptionBuilder.hasArg().withLongOpt(FIRST_ID_LONG).withDescription("First wikidata id (default: 1)").create(FIRST_ID);
         options.addOption(firstId);
-        Option lastId = OptionBuilder.hasArg().withArgName(LAST_ID_LONG).withDescription("Last wikidata id (default: first + 10)").create(LAST_ID);
+        
+        Option lastId = OptionBuilder.hasArg().withLongOpt(LAST_ID_LONG).withDescription("Last wikidata id (default: first wikidata id)").create(LAST_ID);
         options.addOption(lastId); 
-        Option numberOfThreads = OptionBuilder.hasArg().withArgName(NUMBER_OF_THREADS_LONG).withDescription("Number of parallel threads (default 5)").create(NUMBER_OF_THREADS);
-        options.addOption(numberOfThreads); 
+        
+        Option numberOfThreads = OptionBuilder.hasArg().withLongOpt(NUMBER_OF_THREADS_LONG).withDescription("Number of parallel threads (default 5)").create(NUMBER_OF_THREADS);
+        options.addOption(numberOfThreads);
+        
         return options;
     }
 }
