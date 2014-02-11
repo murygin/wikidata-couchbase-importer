@@ -12,7 +12,7 @@ Build & Run WCI
 * name@servant:~$ cd wikidata-couchbase-importer
 * name@servant:~$ mvn package
 * name@servant:~$ cd target
-* name@servant:~$ java -jar wci.jar [-u <couchbase_url>] [-b <bucket>] [-f <first_id>] [-l <last_id>]
+* name@servant:~$ java -jar wci.jar [-u couchbase_url] [-b bucket] [-f first_id] [-l last_id]
 
 
 Wikidata
@@ -60,6 +60,8 @@ Couchbase View example #1: Select all persons
 ---------------------------------------------
 
 View:
+
+```javascript
 function (doc, meta) {
   // Skip documents that aren't JSON
   if (meta.type == "json") {
@@ -71,9 +73,12 @@ function (doc, meta) {
     }
   }
 }
+```
 
 Key: 
+```javascript
 {"entity-type":"item","numeric-id":5}
+```
  
 Url: 
 http://localhost:8092/wikidata/_design/cities/_view/cities?key=%7B%22entity-type%22%3A%22item%22%2C%22numeric-id%22%3A5%7D&connection_timeout=60000&limit=10&skip=80
@@ -83,6 +88,7 @@ Couchbase View example #2: Select all actors
 ---------------------------------------------
 
 View:
+```javascript
 function (doc, meta) {
   // Skip documents that aren't JSON
   if (meta.type == "json") {
@@ -97,9 +103,12 @@ function (doc, meta) {
     }
   }
 }
+```
 
 Key;
+```javascript
 [{"entity-type":"item","numeric-id":5},{"entity-type":"item","numeric-id":33999}]
+```
 
 Url:
 http://localhost:8092/wikidata/_design/actors/_view/actors?key=%5B%7B%22entity-type%22%3A%22item%22%2C%22numeric-id%22%3A5%7D%2C%7B%22entity-type%22%3A%22item%22%2C%22numeric-id%22%3A33999%7D%5D&connection_timeout=60000&limit=1000&skip=0
