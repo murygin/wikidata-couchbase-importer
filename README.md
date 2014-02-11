@@ -1,7 +1,23 @@
-wikidata-couchbase-exporter
-===========================
+Wikidata-Couchbase-Importer (WCI)
+=================================
 
-Exports data from wikidata. Saves data in Couchbase Server.
+
+Imports data from wikidata. Saves data in Couchbase Server.
+
+
+Build & Run WCI
+---------------
+
+name@servant:~$ git clone https://github.com/murygin/wikidata-couchbase-importer.git
+name@servant:~$ cd wikidata-couchbase-importer
+name@servant:~$ mvn package
+name@servant:~$ cd target
+name@servant:~$ java -jar wci.jar [-u <couchbase_url>] [-b <bucket>] [-f <first_id>] [-l <last_id>]
+
+
+Wikidata
+--------
+
 Wikidata is a free knowledge base that can be read and edited by humans and machines alike. 
 It is for data what Wikimedia Commons is for media files: 
 it centralizes access to and management of structured data, 
@@ -15,12 +31,15 @@ You can access data per item, or the entity of the data as dumps.
 
 http://www.wikidata.org/wiki/Wikidata:Data_access
 
-Linked Data interface
 Each item or property has a URI that is obtained by appending its ID (such as Q42 or P12) 
 to the Wikidata namespace:
 
+Access data for Item Q42 (Douglas Adams) in JSON format:
 https://www.wikidata.org/wiki/Special:EntityData/Q42.json
 
+
+Couchbase
+---------
 
 Couchbase is a open source NoSQL database.
 
@@ -29,16 +48,16 @@ Couchbase - http://www.couchbase.com/
 Couchbase Documentation - http://www.couchbase.com/documentation
 
 Start / Stop Couchbase: 
-  dm@cassini:~$ sudo /etc/init.d/couchbase-server start|stop
+  name@servant:~$ sudo /etc/init.d/couchbase-server start|stop
   
 Couchbase in the cloud
   http://www.cloudifysource.org/
   Username: Administrator
   Password: password
 
--------------------------
-Alle Personen selektieren
--------------------------
+
+Couchbase View example #1: Select all persons
+---------------------------------------------
 
 View:
 function (doc, meta) {
@@ -59,9 +78,9 @@ Key:
 Url: 
 http://localhost:8092/wikidata/_design/cities/_view/cities?key=%7B%22entity-type%22%3A%22item%22%2C%22numeric-id%22%3A5%7D&connection_timeout=60000&limit=10&skip=80
 
------------------
-Alle Schauspieler
------------------
+
+Couchbase View example #2: Select all actors
+---------------------------------------------
 
 View:
 function (doc, meta) {

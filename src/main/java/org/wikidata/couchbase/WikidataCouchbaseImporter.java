@@ -41,7 +41,7 @@ import com.sun.jersey.api.client.Client;
  * WikidataCouchbaseImporter loads items from Wikidata
  * and saves these items in couchbase.
  * 
- * Loading ans saving  is done concurrently by multiple {@link WikidataImportThread}s.
+ * Loading ans saving is done concurrently by multiple {@link WikidataImportThread}s.
  * 
  * Wikidata is a free knowledge base that can be read and edited by humans and machines alike. 
  * http://wikidata.org
@@ -53,15 +53,18 @@ import com.sun.jersey.api.client.Client;
 public class WikidataCouchbaseImporter {
 
     private static final Logger LOG = Logger.getLogger(WikidataCouchbaseImporter.class);
-
-    private static final String USAGE = "[-u <couchbase_url>] [-b <bucket>] [-f <first_id>] [-l <last_id>]";
-    private static final String HEADER = "Wikidata couchbase importer, Copyright (c) 2014 Daniel Murygin.";
-    private static final String FOOTER = "For more instructions, see: http://murygin.wordpress.com";
     
-    private static final Integer FIRST_ID_DEFAULT = 1;
-    private static final Integer MAX_NUMBER_Of_THREADS_DEFAULT = 5;
+    // Default parameter values
     private static final String[] COUCHBASE_URLS_DEFAULT = {"http://127.0.0.1:8091/pools"};
     private static final String BUCKET_DEFAULT = "wikidata";
+    private static final Integer FIRST_ID_DEFAULT = 1;
+    private static final Integer MAX_NUMBER_Of_THREADS_DEFAULT = 5;
+    private static long TERMINATION_TIMEOUT_IN_MINUTES = 15;
+    
+    // Text for command line help output
+    private static final String USAGE = "java -jar wci.jar [-u <couchbase_url>] [-b <bucket>] [-f <first_id>] [-l <last_id>]";
+    private static final String HEADER = "Wikidata couchbase importer, Copyright (c) 2014 Daniel Murygin.";
+    private static final String FOOTER = "For more instructions, see: http://murygin.wordpress.com";
     
     private Integer firstId = FIRST_ID_DEFAULT;
     private Integer lastId;
@@ -69,25 +72,34 @@ public class WikidataCouchbaseImporter {
     private String[] couchbaseUrls = COUCHBASE_URLS_DEFAULT;
     private String bucket = BUCKET_DEFAULT;
     
-    private static long timeoutInMinutes = 15;
-
     private static ExecutorService taskExecutor;
     private static Client jerseyClient = null;
     private static CouchbaseClient cb = null;
 
+    /**
+     * Creates a WikidataCouchbaseImporter with default parameters.
+     */
     public WikidataCouchbaseImporter() {
-        super();    
+        super(); 
+        couchbaseUrls = COUCHBASE_URLS_DEFAULT;
+        bucket = BUCKET_DEFAULT;
+        firstId = FIRST_ID_DEFAULT;
+        lastId = firstId;
         init();
     }
-
-
+    
     /**
-     * @param couchbaseUrlsParam
-     * @param firstIdParam
-     * @param lastIdParam
+     * Creates a WikidataCouchbaseImporter with given parameter.
+     * If one of the parameters is <code>null</code> the default value
+     * is used for this parameter.
+     * 
+     * @param couchbaseUrlsParam An array with couchbase connection Urls, e.g.: http://127.0.0.1:8091/pools
+     * @param bucketParam The name of a couchbase bucket
+     * @param firstIdParam First wikidata id for import
+     * @param lastIdParam Last wikidata id for import
      */
     public WikidataCouchbaseImporter(String[] couchbaseUrlsParam, String bucketParam, Integer firstIdParam, Integer lastIdParam) {
-       
+       super();
        couchbaseUrls = couchbaseUrlsParam;
        if(couchbaseUrls==null || couchbaseUrls.length<1) {
            couchbaseUrls = COUCHBASE_URLS_DEFAULT;
@@ -153,7 +165,7 @@ public class WikidataCouchbaseImporter {
                 if(taskExecutor!=null) {
                     taskExecutor.shutdown();
                 }
-                taskExecutor.awaitTermination(timeoutInMinutes, TimeUnit.MINUTES);
+                taskExecutor.awaitTermination(TERMINATION_TIMEOUT_IN_MINUTES, TimeUnit.MINUTES);
                 cb.shutdown();
                 logStatistics(startTimestamp, firstId, lastId);
             } catch (Exception e) {
