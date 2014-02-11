@@ -8,11 +8,11 @@ Imports data from wikidata. Saves data in Couchbase Server.
 Build & Run WCI
 ---------------
 
-name@servant:~$ git clone https://github.com/murygin/wikidata-couchbase-importer.git
-name@servant:~$ cd wikidata-couchbase-importer
-name@servant:~$ mvn package
-name@servant:~$ cd target
-name@servant:~$ java -jar wci.jar [-u <couchbase_url>] [-b <bucket>] [-f <first_id>] [-l <last_id>]
+* name@servant:~$ git clone https://github.com/murygin/wikidata-couchbase-importer.git
+* name@servant:~$ cd wikidata-couchbase-importer
+* name@servant:~$ mvn package
+* name@servant:~$ cd target
+* name@servant:~$ java -jar wci.jar [-u <couchbase_url>] [-b <bucket>] [-f <first_id>] [-l <last_id>]
 
 
 Wikidata
