@@ -12,7 +12,7 @@ Build & Run WCI
 * name@servant:~$ cd wikidata-couchbase-importer
 * name@servant:~$ mvn package
 * name@servant:~$ cd target
-* name@servant:~$ java -jar wci.jar [-u <couchbase_url>] [-b <bucket>] [-f <first_id>] [-l <last_id>]
+* name@servant:~$ java -jar wci.jar [-u couchbase_url] [-b bucket] [-f first_id] [-l last_id]
 
 
 Wikidata
