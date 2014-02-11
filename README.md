@@ -72,11 +72,13 @@ function (doc, meta) {
       }
     }
   }
-}```
+}
+```
 
 Key: 
 ```javascript
-{"entity-type":"item","numeric-id":5}```
+{"entity-type":"item","numeric-id":5}
+```
  
 Url: 
 http://localhost:8092/wikidata/_design/cities/_view/cities?key=%7B%22entity-type%22%3A%22item%22%2C%22numeric-id%22%3A5%7D&connection_timeout=60000&limit=10&skip=80
@@ -100,11 +102,13 @@ function (doc, meta) {
       }     
     }
   }
-}```
+}
+```
 
 Key;
 ```javascript
-[{"entity-type":"item","numeric-id":5},{"entity-type":"item","numeric-id":33999}]```
+[{"entity-type":"item","numeric-id":5},{"entity-type":"item","numeric-id":33999}]
+```
 
 Url:
 http://localhost:8092/wikidata/_design/actors/_view/actors?key=%5B%7B%22entity-type%22%3A%22item%22%2C%22numeric-id%22%3A5%7D%2C%7B%22entity-type%22%3A%22item%22%2C%22numeric-id%22%3A33999%7D%5D&connection_timeout=60000&limit=1000&skip=0
