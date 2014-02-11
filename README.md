@@ -61,7 +61,8 @@ Couchbase View example #1: Select all persons
 
 View:
 
-```function (doc, meta) {
+```javascript
+function (doc, meta) {
   // Skip documents that aren't JSON
   if (meta.type == "json") {
     if(doc.claims.P31) {
@@ -74,7 +75,8 @@ View:
 }```
 
 Key: 
-```{"entity-type":"item","numeric-id":5}```
+```javascript
+{"entity-type":"item","numeric-id":5}```
  
 Url: 
 http://localhost:8092/wikidata/_design/cities/_view/cities?key=%7B%22entity-type%22%3A%22item%22%2C%22numeric-id%22%3A5%7D&connection_timeout=60000&limit=10&skip=80
@@ -84,7 +86,8 @@ Couchbase View example #2: Select all actors
 ---------------------------------------------
 
 View:
-```function (doc, meta) {
+```javascript
+function (doc, meta) {
   // Skip documents that aren't JSON
   if (meta.type == "json") {
     if(doc.claims.P31 && doc.claims.P106) {
@@ -100,7 +103,8 @@ View:
 }```
 
 Key;
-```[{"entity-type":"item","numeric-id":5},{"entity-type":"item","numeric-id":33999}]```
+```javascript
+[{"entity-type":"item","numeric-id":5},{"entity-type":"item","numeric-id":33999}]```
 
 Url:
 http://localhost:8092/wikidata/_design/actors/_view/actors?key=%5B%7B%22entity-type%22%3A%22item%22%2C%22numeric-id%22%3A5%7D%2C%7B%22entity-type%22%3A%22item%22%2C%22numeric-id%22%3A33999%7D%5D&connection_timeout=60000&limit=1000&skip=0
