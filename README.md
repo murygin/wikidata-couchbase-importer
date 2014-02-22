@@ -5,6 +5,7 @@ Wikidata-Couchbase-Importer (WCI)
 Imports data from wikidata. Saves data in Couchbase Server.
 
 
+
 Build & Run WCI
 ---------------
 
@@ -12,7 +13,8 @@ Build & Run WCI
 * name@servant:~$ cd wikidata-couchbase-importer
 * name@servant:~$ mvn package
 * name@servant:~$ cd target
-* name@servant:~$ java -jar wci.jar [-u couchbase_url] [-b bucket] [-f first_id] [-l last_id]
+* name@servant:~$ java -jar wci.jar [-u couchbase_url_1[,couchbase_url_2]] [-b bucket] [-f first_id] [-l last_id]
+
 
 
 Wikidata
@@ -38,6 +40,7 @@ Access data for Item Q42 (Douglas Adams) in JSON format:
 https://www.wikidata.org/wiki/Special:EntityData/Q42.json
 
 
+
 Couchbase
 ---------
 
@@ -54,6 +57,7 @@ Couchbase in the cloud
   http://www.cloudifysource.org/
   Username: Administrator
   Password: password
+
 
 
 Couchbase View example #1: Select all persons
@@ -82,6 +86,7 @@ Key:
  
 Url: 
 http://localhost:8092/wikidata/_design/cities/_view/cities?key=%7B%22entity-type%22%3A%22item%22%2C%22numeric-id%22%3A5%7D&connection_timeout=60000&limit=10&skip=80
+
 
 
 Couchbase View example #2: Select all actors
