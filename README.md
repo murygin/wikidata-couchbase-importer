@@ -3,6 +3,7 @@ Wikidata-Couchbase-Importer (WCI)
 
 
 Imports data from wikidata. Saves data in Couchbase Server.
+Blog post: http://murygin.wordpress.com/2014/02/23/wikidata-couchbase-importer/
 
 
 
