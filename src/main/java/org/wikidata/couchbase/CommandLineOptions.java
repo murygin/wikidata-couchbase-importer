@@ -45,6 +45,9 @@ public class CommandLineOptions {
     public static final String NUMBER_OF_THREADS = "t";
     public static final String NUMBER_OF_THREADS_LONG = "threads";
     
+    public static final String HELP = "h";
+    public static final String HELP_LONG = "help";
+    
     @SuppressWarnings("static-access")
     public static Options get() {
         Options options = new Options();
@@ -60,14 +63,17 @@ public class CommandLineOptions {
         Option bucket = OptionBuilder.hasArg().withLongOpt(BUCKET_LONG).withDescription("Bucket name (default: wikidata)").create(BUCKET);
         options.addOption(bucket);
         
-        Option firstId = OptionBuilder.hasArg().withLongOpt(FIRST_ID_LONG).withDescription("First wikidata id (default: 1)").create(FIRST_ID);
+        Option firstId = OptionBuilder.hasArg().withLongOpt(FIRST_ID_LONG).withDescription("First wikidata item id (default: 1)").create(FIRST_ID);
         options.addOption(firstId);
         
-        Option lastId = OptionBuilder.hasArg().withLongOpt(LAST_ID_LONG).withDescription("Last wikidata id (default: first wikidata id)").create(LAST_ID);
+        Option lastId = OptionBuilder.hasArg().withLongOpt(LAST_ID_LONG).withDescription("Last wikidata item id (default: first wikidata id)").create(LAST_ID);
         options.addOption(lastId); 
         
         Option numberOfThreads = OptionBuilder.hasArg().withLongOpt(NUMBER_OF_THREADS_LONG).withDescription("Number of parallel threads (default 5)").create(NUMBER_OF_THREADS);
         options.addOption(numberOfThreads);
+        
+        Option help = OptionBuilder.withLongOpt(HELP_LONG).withDescription("Show help").create(HELP);
+        options.addOption(help);
         
         return options;
     }

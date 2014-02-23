@@ -63,14 +63,14 @@ public class WikidataCouchbaseImporter {
     
     // Text for command line help output
     private static final String USAGE = "java -jar wci.jar [-u <couchbase_url>] [-b <bucket>] [-f <first_id>] [-l <last_id>]";
-    private static final String HEADER = "Wikidata couchbase importer, Copyright (c) 2014 Daniel Murygin.";
-    private static final String FOOTER = "For more instructions, see: http://murygin.wordpress.com";
-    
-    private Integer firstId = FIRST_ID_DEFAULT;
-    private Integer lastId;
-    private static int maxNumberOfThreads = MAX_NUMBER_Of_THREADS_DEFAULT;
+    private static final String HEADER = "Wikidata couchbase importer (WCI), Copyright (c) 2014 Daniel Murygin.";
+    private static final String FOOTER = "For more instructions, see: http://murygin.wordpress.com/2014/02/22/wikidata-couchbase-importer/";
+
     private String[] couchbaseUrls = COUCHBASE_URLS_DEFAULT;
     private String bucket = BUCKET_DEFAULT;
+    private Integer firstId = FIRST_ID_DEFAULT;
+    private Integer lastId;
+    private int maxNumberOfThreads = MAX_NUMBER_Of_THREADS_DEFAULT;
     
     private static ExecutorService taskExecutor;
     private static Client jerseyClient = null;
@@ -98,7 +98,12 @@ public class WikidataCouchbaseImporter {
      * @param firstIdParam First wikidata id for import
      * @param lastIdParam Last wikidata id for import
      */
-    public WikidataCouchbaseImporter(String[] couchbaseUrlsParam, String bucketParam, Integer firstIdParam, Integer lastIdParam) {
+    public WikidataCouchbaseImporter(
+            String[] couchbaseUrlsParam, 
+            String bucketParam, 
+            Integer firstIdParam, 
+            Integer lastIdParam, 
+            Integer maxNumberOfThreadsParam) {
        super();
        couchbaseUrls = couchbaseUrlsParam;
        if(couchbaseUrls==null || couchbaseUrls.length<1) {
@@ -116,6 +121,7 @@ public class WikidataCouchbaseImporter {
        if(lastId==null) {
            lastId = firstId;
        }
+       maxNumberOfThreads = maxNumberOfThreadsParam;
        init();
     }
     
@@ -143,17 +149,23 @@ public class WikidataCouchbaseImporter {
         long startTimestamp = initRuntime();
         CommandLineParser parser = new GnuParser();
         Options options = CommandLineOptions.get();
-        Integer firstId = null;
-        Integer lastId = null;
+        Integer firstIdParam = null;
+        Integer lastIdParam = null;
+        Integer maxNumberOfThreadsParam = null;
         try {           
-            CommandLine cmd = parser.parse( options, args);
-            firstId = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.FIRST_ID, String.valueOf(FIRST_ID_DEFAULT)));
-            lastId = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.LAST_ID, String.valueOf(firstId)));
-            maxNumberOfThreads = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.NUMBER_OF_THREADS, String.valueOf(MAX_NUMBER_Of_THREADS_DEFAULT)));
+            CommandLine cmd = parser.parse(options, args);
+            firstIdParam = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.FIRST_ID, String.valueOf(FIRST_ID_DEFAULT)));
+            lastIdParam = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.LAST_ID, String.valueOf(firstIdParam)));
+            maxNumberOfThreadsParam = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.NUMBER_OF_THREADS, String.valueOf(MAX_NUMBER_Of_THREADS_DEFAULT)));
             String[] urlsFromCmd = cmd.getOptionValues(CommandLineOptions.COUCHBASE_URLS); 
             String bucket = cmd.getOptionValue(CommandLineOptions.BUCKET, BUCKET_DEFAULT); 
-            WikidataCouchbaseImporter importer = new WikidataCouchbaseImporter(urlsFromCmd,bucket,firstId,lastId);
-            importer.run();          
+            boolean printHelp = cmd.hasOption(CommandLineOptions.HELP); 
+            if(printHelp) {
+                printUsage(options);
+            } else {
+                WikidataCouchbaseImporter importer = new WikidataCouchbaseImporter(urlsFromCmd,bucket,firstIdParam,lastIdParam,maxNumberOfThreadsParam);
+                importer.run();   
+            }
         } catch (ParseException e) {
             LOG.error(e);
             printUsage(options);
@@ -164,10 +176,10 @@ public class WikidataCouchbaseImporter {
             try {
                 if(taskExecutor!=null) {
                     taskExecutor.shutdown();
-                }
-                taskExecutor.awaitTermination(TERMINATION_TIMEOUT_IN_MINUTES, TimeUnit.MINUTES);
-                cb.shutdown();
-                logStatistics(startTimestamp, firstId, lastId);
+                    taskExecutor.awaitTermination(TERMINATION_TIMEOUT_IN_MINUTES, TimeUnit.MINUTES);
+                    cb.shutdown();
+                    logStatistics(startTimestamp, firstIdParam, lastIdParam);
+                }             
             } catch (Exception e) {
                 LOG.error("Error while shutting down.", e);
             }  
@@ -228,7 +240,7 @@ public class WikidataCouchbaseImporter {
     }
 
     public void setMaxNumberOfThreads(int maxNumberOfThreads) {
-        WikidataCouchbaseImporter.maxNumberOfThreads = maxNumberOfThreads;
+        this.maxNumberOfThreads = maxNumberOfThreads;
     }
     
     private static void printUsage(Options options) {

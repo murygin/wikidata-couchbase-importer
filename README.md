@@ -31,7 +31,7 @@ http://www.wikidata.org/
 There are several ways to access the data from Wikidata. 
 You can access data per item, or the entity of the data as dumps.
 
-http://www.wikidata.org/wiki/Wikidata:Data_access
+aktu
 
 Each item or property has a URI that is obtained by appending its ID (such as Q42 or P12) 
 to the Wikidata namespace:
