@@ -59,6 +59,7 @@ public class WikidataCouchbaseImporter {
     private static final String BUCKET_DEFAULT = "wikidata";
     private static final Integer FIRST_ID_DEFAULT = 1;
     private static final Integer MAX_NUMBER_Of_THREADS_DEFAULT = 5;
+    private static final Integer MAX_NUMBER_PER_ITERATION_DEFAULT = 2000;
     private static long TERMINATION_TIMEOUT_IN_MINUTES = 15;
     
     // Text for command line help output
@@ -70,7 +71,10 @@ public class WikidataCouchbaseImporter {
     private String bucket = BUCKET_DEFAULT;
     private Integer firstId = FIRST_ID_DEFAULT;
     private Integer lastId;
+    private Integer startId;
+    private Integer stopId;
     private int maxNumberOfThreads = MAX_NUMBER_Of_THREADS_DEFAULT;
+    private int maxNumberPerIteration = MAX_NUMBER_PER_ITERATION_DEFAULT;
     
     private static ExecutorService taskExecutor;
     private static Client jerseyClient = null;
@@ -172,6 +176,9 @@ public class WikidataCouchbaseImporter {
         } catch (NumberFormatException e) {
             LOG.error(e);
             printUsage(options);
+        } catch (InterruptedException e) {
+            LOG.error(e);
+            printUsage(options);
         } finally {
             try {
                 if(taskExecutor!=null) {
@@ -190,11 +197,26 @@ public class WikidataCouchbaseImporter {
     
     /**
      * Run the import
+     * @throws InterruptedException 
      */
-    public void run() {
+    public void run() throws InterruptedException {
         LOG.info("Starting import...");
         logCouchbaseParameter();
-        importItem(getFirstId());
+        setStartId(getFirstId());
+        setStopId(0);
+        while(getStopId() < getLastId()) {
+            if((getLastId()-getStartId()) < maxNumberPerIteration) {
+                setStopId(getLastId());
+            } else {
+                setStopId(getStartId()+maxNumberPerIteration);
+            }
+            LOG.info("Importing item " + getStartId() + " to " + getStopId() + "...");
+            importItem(getStartId());
+            taskExecutor.shutdown();
+            taskExecutor.awaitTermination(TERMINATION_TIMEOUT_IN_MINUTES, TimeUnit.MINUTES);
+            taskExecutor = Executors.newFixedThreadPool(maxNumberOfThreads);
+            setStartId(getStopId()+1);
+        }
     }
 
     /**
@@ -207,14 +229,14 @@ public class WikidataCouchbaseImporter {
      *            The name of an Artist
      */
     private void importItem(int id) {
-        if (LOG.isInfoEnabled()) {
-            LOG.info("Importing item " + id);
+        if (LOG.isDebugEnabled()) {
+            LOG.debug("Importing item " + id);
         }
 
         WikidataImportThread exportThread = new WikidataImportThread(jerseyClient, cb, id);
         taskExecutor.execute(exportThread);
         int next = id + 1;
-        if(next <= getLastId()) {
+        if(next <= getStopId()) {
             importItem(next);
         }
     }
@@ -233,6 +255,22 @@ public class WikidataCouchbaseImporter {
 
     public void setLastId(Integer endId) {
         this.lastId = endId;
+    }
+
+    public Integer getStartId() {
+        return startId;
+    }
+
+    public void setStartId(Integer startId) {
+        this.startId = startId;
+    }
+
+    public Integer getStopId() {
+        return stopId;
+    }
+
+    public void setStopId(Integer stopId) {
+        this.stopId = stopId;
     }
 
     public int getMaxNumberOfThreads() {

@@ -23,9 +23,13 @@
 		</layout>
 	</appender>
     
+    <logger name="org.wikidata.couchbase.WikidataCouchbaseImporter">
+        <level value="INFO" />
+    </logger>
+    
 	<!-- Logger for everything else -->
 	<root>
-		<priority value="INFO" />
+		<priority value="ERROR" />
 		<appender-ref ref="STDOUT" />
 	</root>
 
