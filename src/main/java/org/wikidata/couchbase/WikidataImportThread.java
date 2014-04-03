@@ -21,20 +21,18 @@ package org.wikidata.couchbase;
 
 import org.apache.log4j.Logger;
 
-import com.couchbase.client.CouchbaseClient;
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 
 /**
  * This thread loads information about an item from wikidata
- * ans saves JSON response in a Couchbase bucket.
+ * ans saves JSON response in a database.
  * 
  * {@link WikidataCouchbaseImporter} uses multiple WikidataImportThread
  * to import data from wikidata
  * 
  * wikidara API - http://www.wikidata.org/wiki/Wikidata:Data_access
- * Couchbase - http://www.couchbase.com/
  *
  * @author Daniel Murygin <dm[at]sernet[dot]de>
  */
@@ -43,14 +41,13 @@ public class WikidataImportThread extends Thread {
     private static final Logger LOG = Logger.getLogger(WikidataImportThread.class);
     
     Client jerseyClient = null;
-    CouchbaseClient couchbaseClient = null;
+    PersistService persistService = null;
     Integer startId;
     
-    
-    public WikidataImportThread(Client jerseyClient, CouchbaseClient cb, Integer startId) {
+    public WikidataImportThread(Client jerseyClient, PersistService persistService, Integer startId) {
         super();
         this.jerseyClient = jerseyClient;
-        this.couchbaseClient = cb;
+        this.persistService = persistService;
         this.startId = startId;
     }
     
@@ -71,9 +68,9 @@ public class WikidataImportThread extends Thread {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Wikidata JSON response: " + jsonResponse);
             } 
-            saveJsonInCouchbase(startId, jsonResponse);   
+            saveJsonInDatabase(startId, jsonResponse);   
             if (LOG.isInfoEnabled()) {
-                LOG.info("Item " + startId + " saved in couchbase.");
+                LOG.info("Item " + startId + " saved in db.");
             }
         } catch (UniformInterfaceException uie) {
             int status = -1;
@@ -89,7 +86,9 @@ public class WikidataImportThread extends Thread {
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Stacktrace: ", che);
             }
-        } catch (Exception e) {
+        }
+        
+        catch (Exception e) {
             LOG.warn("Item " + startId + " was not exported. Unknow error: " + e.getMessage());
             if (LOG.isDebugEnabled()) {
                 LOG.debug("Stacktrace: ", e);
@@ -109,9 +108,8 @@ public class WikidataImportThread extends Thread {
         return jsonResponse;
     }
 
-    private void saveJsonInCouchbase(Integer id, String jsonResponse) {
-        String key = buildDocumentKey(id);            
-        couchbaseClient.set(key, 0, jsonResponse);
+    private void saveJsonInDatabase(Integer id, String jsonResponse) {
+        persistService.save(id, jsonResponse);
         
     }
     
@@ -122,11 +120,5 @@ public class WikidataImportThread extends Thread {
         sb.append(".json");    
         return sb.toString();
     }
-    
-    private String buildDocumentKey(Integer startId) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("wikidata:item:");
-        sb.append(startId);
-        return sb.toString();
-    }
+
 }

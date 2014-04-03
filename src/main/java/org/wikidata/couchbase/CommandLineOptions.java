@@ -30,11 +30,14 @@ import org.apache.commons.cli.Options;
  */
 public class CommandLineOptions {
     
-    public static final String COUCHBASE_URLS = "u";
-    public static final String COUCHBASE_URLS_LONG = "urls";
+    public static final String DB_TYPE = "t";
+    public static final String DB_TYPE_LONG = "type";
     
-    public static final String BUCKET = "b";
-    public static final String BUCKET_LONG = "bucket";
+    public static final String DB_URLS = "u";
+    public static final String DB_URLS_LONG = "urls";
+    
+    public static final String DB = "d";
+    public static final String DB_LONG = "db";
     
     public static final String FIRST_ID = "f";   
     public static final String FIRST_ID_LONG = "first";
@@ -42,7 +45,7 @@ public class CommandLineOptions {
     public static final String LAST_ID = "l";
     public static final String LAST_ID_LONG = "last";
 
-    public static final String NUMBER_OF_THREADS = "t";
+    public static final String NUMBER_OF_THREADS = "n";
     public static final String NUMBER_OF_THREADS_LONG = "threads";
     
     public static final String HELP = "h";
@@ -51,16 +54,20 @@ public class CommandLineOptions {
     @SuppressWarnings("static-access")
     public static Options get() {
         Options options = new Options();
+        
+        Option type = OptionBuilder.hasArg().withLongOpt(DB_TYPE_LONG).withDescription("Database type: 'couchbae' or 'mongo' (default: mongo)").create(DB_TYPE);
+        options.addOption(type);
+        
         Option couchbaseUrls = OptionBuilder
                 .hasArg()
                 .hasArgs()
                 .withValueSeparator(',')
-                .withLongOpt(COUCHBASE_URLS_LONG)
-                .withDescription("Couchbase URL(s), separated by ',' (default: http://127.0.0.1:8091/pools)")
-                .create(COUCHBASE_URLS);
+                .withLongOpt(DB_URLS_LONG)
+                .withDescription("Database URL(s), separated by ',' (default: 'http://127.0.0.1:8091/pools' for Couchbase, 'localhost' for MongoDB)")
+                .create(DB_URLS);
         options.addOption(couchbaseUrls); 
         
-        Option bucket = OptionBuilder.hasArg().withLongOpt(BUCKET_LONG).withDescription("Bucket name (default: wikidata)").create(BUCKET);
+        Option bucket = OptionBuilder.hasArg().withLongOpt(DB_LONG).withDescription("Database / Bucket name (default: wikidata)").create(DB);
         options.addOption(bucket);
         
         Option firstId = OptionBuilder.hasArg().withLongOpt(FIRST_ID_LONG).withDescription("First wikidata item id (default: 1)").create(FIRST_ID);

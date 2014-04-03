@@ -13,6 +13,7 @@
   <classpathentry kind="var" path="M2_REPO/org/codehaus/jettison/jettison/1.1/jettison-1.1.jar"/>
   <classpathentry kind="var" path="M2_REPO/junit/junit/4.11/junit-4.11.jar"/>
   <classpathentry kind="var" path="M2_REPO/log4j/log4j/1.2.16/log4j-1.2.16.jar"/>
+  <classpathentry kind="var" path="M2_REPO/org/mongodb/mongo-java-driver/2.11.3/mongo-java-driver-2.11.3.jar"/>
   <classpathentry kind="var" path="M2_REPO/io/netty/netty/3.5.5.Final/netty-3.5.5.Final.jar"/>
   <classpathentry kind="var" path="M2_REPO/net/spy/spymemcached/2.10.4/spymemcached-2.10.4.jar"/>
   <classpathentry kind="var" path="M2_REPO/stax/stax-api/1.0.1/stax-api-1.0.1.jar"/>
