@@ -19,6 +19,12 @@
  ******************************************************************************/
 package org.wikidata.couchbase;
 
+import java.util.List;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+
 /**
  *
  *
@@ -49,6 +55,18 @@ public class PersistService {
         getHandler().save(id,json);
     }
     
+    public void save(DBObject object) {
+        getHandler().save(object);
+    }
+    
+    public List<DBObject> load(int start, int limit) {
+        return getHandler().load(start, limit);
+    }
+    
+    public long count() {
+        return getHandler().count();
+    }
+    
     public void shutdown() {
         getHandler().shutdown();
     }
@@ -59,5 +77,13 @@ public class PersistService {
 
     public void setHandler(IPersistHandler handler) {
         this.handler = handler;
+    }
+
+    /**
+     * @param doc
+     */
+    public DBCursor find(BasicDBObject doc) {
+        return getHandler().find(doc);
+        
     }
 }

@@ -19,14 +19,21 @@
  ******************************************************************************/
 package org.wikidata.couchbase;
 
+import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.log4j.Logger;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
+import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
@@ -43,6 +50,7 @@ public class MongoPersistHandler implements IPersistHandler {
     private static final Logger LOG = Logger.getLogger(MongoPersistHandler.class);
     
     public static final String ITEM_COLLECTION_NAME = "item";
+    public static final String CLAIM_COLLECTION_NAME = "claim";
     
     private Configuration conf;
     
@@ -74,11 +82,16 @@ public class MongoPersistHandler implements IPersistHandler {
      * @see org.wikidata.couchbase.IPersistHandler#save(java.lang.Integer, java.lang.String)
      */
     @Override
-    public void save(Integer id, String json) {
-        DBObject dbObject = (DBObject)JSON.parse(json);
-        String idString = buildDocumentKey(id);
-        dbObject.put("_id", idString);
+    public void save(Integer id, String jsonString) {
+        DBObject dbObject = null;
         try {
+            dbObject = new BasicDBObject();                  
+            JsonNode node = createJsonNode(jsonString);         
+            JsonNode transformedNode = transformNode(node);        
+            String jsonText = transformedNode.toString();          
+            dbObject.put("item", JSON.parse(jsonText));          
+            String idString = buildDocumentKey(id);
+            dbObject.put("_id", idString);
             getCollection().insert(dbObject);
         } catch (MongoException.DuplicateKey e) {
             LOG.info("Item " + id + " exists and is updated");
@@ -86,10 +99,64 @@ public class MongoPersistHandler implements IPersistHandler {
                 LOG.debug("Stacktrace: ", e);
             }
             getCollection().save(dbObject);
+        } catch (Exception e) {
+            LOG.error("Error while saving Object.", e);
+            throw new RuntimeException("Error while saving Object.", e);
         }
     }
     
-    private String buildDocumentKey(Integer startId) {
+    @Override
+    public void save(DBObject dbObject) {    
+        try {         
+            getCollection().insert(dbObject);
+        } catch (MongoException.DuplicateKey e) {
+            LOG.info("Item " + dbObject.get("_id") + " exists and is updated");
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Stacktrace: ", e);
+            }
+            getCollection().save(dbObject);
+        } catch (Exception e) {
+            LOG.error("Error while saving Object.", e);
+            throw new RuntimeException("Error while saving Object.", e);
+        }
+    }
+    
+    @Override
+    public List<DBObject> load(int start, int limit) {
+        DBCursor cursor = getCollection().find();
+        cursor.skip(start);
+        cursor.limit(limit);
+        List<DBObject> result = new LinkedList<DBObject>();
+        try {
+           while(cursor.hasNext()) {
+               result.add(cursor.next());
+           }
+        } finally {
+           cursor.close();
+        }
+        return result;
+    }
+    
+    /* (non-Javadoc)
+     * @see org.wikidata.couchbase.IPersistHandler#count()
+     */
+    @Override
+    public long count() {
+        return getCollection().getCount();
+    }
+
+    private JsonNode transformNode(JsonNode node) {
+        Map.Entry<String, JsonNode> entry = node.iterator().next().fields().next();  
+        JsonNode transformedNode = entry.getValue();
+        return transformedNode;
+    }
+
+    private JsonNode createJsonNode(String jsonString) throws IOException, JsonProcessingException {
+        ObjectMapper mapper = new ObjectMapper();
+        return mapper.readTree(jsonString);
+    }
+    
+    public static String buildDocumentKey(Integer startId) {
         StringBuilder sb = new StringBuilder();
         sb.append("wikidata:item:");
         sb.append(startId);
@@ -117,5 +184,15 @@ public class MongoPersistHandler implements IPersistHandler {
         }
         return collection;
     }
+
+    /* (non-Javadoc)
+     * @see org.wikidata.couchbase.IPersistHandler#find(com.mongodb.BasicDBObject)
+     */
+    @Override
+    public DBCursor find(BasicDBObject doc) {
+        return getCollection().find(doc);
+    }
+
+
 
 }

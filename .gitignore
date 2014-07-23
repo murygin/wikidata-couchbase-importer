@@ -1,3 +1,14 @@
 bin
 /target
 /itemsPerSecond.txt
+/wikidata-importer.log
+/wikidata-importer.log.1
+/wikidata-importer.log.10
+/wikidata-importer.log.2
+/wikidata-importer.log.3
+/wikidata-importer.log.4
+/wikidata-importer.log.5
+/wikidata-importer.log.6
+/wikidata-importer.log.7
+/wikidata-importer.log.8
+/wikidata-importer.log.9

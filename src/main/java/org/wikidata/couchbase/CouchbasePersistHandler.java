@@ -20,12 +20,16 @@
 package org.wikidata.couchbase;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
 
 import com.couchbase.client.CouchbaseClient;
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 
 /**
  *
@@ -90,6 +94,41 @@ public class CouchbasePersistHandler implements IPersistHandler {
 
     public void setConf(Configuration conf) {
         this.conf = conf;
+    }
+
+    /* (non-Javadoc)
+     * @see org.wikidata.couchbase.IPersistHandler#load(int, int)
+     */
+    @Override
+    public List<DBObject> load(int start, int limit) {  
+        return Collections.emptyList();
+    }
+
+    /* (non-Javadoc)
+     * @see org.wikidata.couchbase.IPersistHandler#count()
+     */
+    @Override
+    public long count() {
+        // TODO Auto-generated method stub
+        return 0;
+    }
+
+    /* (non-Javadoc)
+     * @see org.wikidata.couchbase.IPersistHandler#save(com.mongodb.DBObject)
+     */
+    @Override
+    public void save(DBObject object) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    /* (non-Javadoc)
+     * @see org.wikidata.couchbase.IPersistHandler#find(com.mongodb.BasicDBObject)
+     */
+    @Override
+    public DBCursor find(BasicDBObject doc) {
+        // TODO Auto-generated method stub
+        return null;
     }
 
 }

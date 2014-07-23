@@ -32,7 +32,7 @@ import com.sun.jersey.api.client.WebResource;
  * {@link WikidataCouchbaseImporter} uses multiple WikidataImportThread
  * to import data from wikidata
  * 
- * wikidara API - http://www.wikidata.org/wiki/Wikidata:Data_access
+ * wikidata API - http://www.wikidata.org/wiki/Wikidata:Data_access
  *
  * @author Daniel Murygin <dm[at]sernet[dot]de>
  */

@@ -175,7 +175,7 @@ public class WikidataCouchbaseImporter {
     /**
      * Loads an item from Wikidata and saves it in a database.
      * 
-     * Loading ans saving is done concurrently by multiple
+     * Loading and saving is done concurrently by multiple
      * {@link WikidataImportThread}s.
      * 
      * @param id The id of a wikidata item

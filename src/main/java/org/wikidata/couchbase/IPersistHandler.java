@@ -19,6 +19,12 @@
  ******************************************************************************/
 package org.wikidata.couchbase;
 
+import java.util.List;
+
+import com.mongodb.BasicDBObject;
+import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
+
 /**
  *
  *
@@ -26,16 +32,17 @@ package org.wikidata.couchbase;
  */
 public interface IPersistHandler {
 
-    /**
-     * @param id
-     * @param json
-     */
     void save(Integer id, String json);
+    
+    void save(DBObject object);
+    
+    List<DBObject> load(int start, int limit);
+    
+    long count();
 
-    /**
-     * 
-     */
     void shutdown();
+
+    DBCursor find(BasicDBObject doc);
 
 
 }

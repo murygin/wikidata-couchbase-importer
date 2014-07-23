@@ -94,6 +94,41 @@ public class Configuration {
         return conf;
     }
     
+    public static Configuration createForIteratorFromCommandLine(CommandLine cmd) {
+        String dbType = cmd.getOptionValue(CommandLineOptions.DB_TYPE, DB_TYPE_MONGO);
+        Integer firstIdParam = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.FIRST_ID, String.valueOf(FIRST_ID_DEFAULT)));
+        Integer lastIdParam = null;
+        if(cmd.getOptionValue(CommandLineOptions.LAST_ID)!=null) {
+                lastIdParam = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.LAST_ID));
+        }
+        int maxNumberOfThreadsParam = Integer.valueOf(cmd.getOptionValue(CommandLineOptions.NUMBER_OF_THREADS, String.valueOf(MAX_NUMBER_Of_THREADS_DEFAULT)));
+        String[] urlsFromCmd = cmd.getOptionValues(CommandLineOptions.DB_URLS); 
+        String db = cmd.getOptionValue(CommandLineOptions.DB, DB_DEFAULT); 
+        
+        if(!DB_TYPE_COUCHBASE.equals(dbType) && !DB_TYPE_MONGO.equals(dbType)) {
+            dbType = DB_TYPE_MONGO;
+        }
+        
+        if(urlsFromCmd==null || urlsFromCmd.length<1) {
+            urlsFromCmd = (DB_TYPE_COUCHBASE.equals(dbType)) ? DB_URLS_DEFAULT_COUCHBASE : DB_URLS_DEFAULT_MONGO;
+        }
+        if(db==null) {
+            db = DB_DEFAULT;
+        }
+        if(firstIdParam==null) {
+            firstIdParam = FIRST_ID_DEFAULT;
+        }
+    
+        Configuration conf = new Configuration();
+        conf.setDbType(dbType);
+        conf.setDb(db);
+        conf.setDbUrls(urlsFromCmd);
+        conf.setFirstId(firstIdParam);
+        conf.setLastId(lastIdParam);
+        conf.setMaxNumberOfThreads(maxNumberOfThreadsParam);
+        return conf;
+    }
+    
     public Configuration() {
         super();
     }
